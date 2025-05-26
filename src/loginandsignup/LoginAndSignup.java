@@ -1,6 +1,14 @@
 
 package loginandsignup;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+
+
+
 
 public class LoginAndSignup {
 
@@ -16,6 +24,7 @@ public class LoginAndSignup {
         SignUpFrame.setVisible(true);
         SignUpFrame.pack();
         SignUpFrame.setLocationRelativeTo(null); 
+        
         
     }
     

@@ -1,6 +1,8 @@
 
 package loginandsignup;
 
+import javax.swing.JOptionPane;
+
 
 public class SignUp extends javax.swing.JFrame {
 
@@ -93,9 +95,27 @@ public class SignUp extends javax.swing.JFrame {
 
         jLabel2.setText("Username");
 
+        jTextField1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jTextField1ActionPerformed(evt);
+            }
+        });
+
+        jTextField2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jTextField2ActionPerformed(evt);
+            }
+        });
+
         jLabel3.setText("Phonenumber");
 
         jLabel4.setText("Password");
+
+        jTextField3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jTextField3ActionPerformed(evt);
+            }
+        });
 
         jLabel5.setText("I have an account");
 
@@ -182,19 +202,65 @@ public class SignUp extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        Login LoginFrame = new Login();
-        LoginFrame.setVisible(true);
-        LoginFrame.pack();
-        LoginFrame.setLocationRelativeTo(null);
-        this.dispose();
+        openLoginWindow(); //call method to open login window 
+        this.dispose(); //close the current window
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        
-        Login loginForm = new Login(); // create an instance of LoginForm
-        loginForm.setVisible(true);           // show the login form
-        this.dispose(); 
+        openLoginWindow(); //call the same method for Signup
+        this.dispose(); //close the current window
     }//GEN-LAST:event_jButton2ActionPerformed
+
+    //centralized method to open login window
+    private void openLoginWindow() {
+        Login loginFrame = new Login();
+        loginFrame.setVisible(true);
+        loginFrame.pack();
+        loginFrame.setLocationRelativeTo(null);
+        this.dispose(); //close the current window
+    }
+    
+    private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField3ActionPerformed
+       String password = jTextField3.getText();
+    
+        // Regular expression to enforce password rules
+        String passwordPattern = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};:'\",.<>?/]).{8,}$";
+
+        if (password.matches(passwordPattern)) {
+            JOptionPane.showMessageDialog(null, "Password successfully captured");
+        } else {
+            JOptionPane.showMessageDialog(null, "Password is not correctly formatted; please ensure that the password contains at least eight characters, a capital letter, a number, and a special character.");
+        }
+
+    }//GEN-LAST:event_jTextField3ActionPerformed
+
+    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
+        String username = jTextField1.getText();
+    
+        // Regular expression to enforce username rules
+        String usernamePattern = "^(?=.*_).{5,}$";
+
+        if (username.matches(usernamePattern)) {
+            JOptionPane.showMessageDialog(null, "Username successfully captured");
+        } else {
+            JOptionPane.showMessageDialog(null, "Username is not correctly formatted; please ensure that the username contains an underscore and is at least five characters in length.");
+        }
+
+    }//GEN-LAST:event_jTextField1ActionPerformed
+
+    private void jTextField2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField2ActionPerformed
+        String phoneNumber = jTextField2.getText();
+
+           // Regular expression to enforce phone number rules
+           String phonePattern = "^\\+27\\d{9}$";
+
+           if (phoneNumber.matches(phonePattern)) {
+               JOptionPane.showMessageDialog(null, "Cellphone number successfully added");
+           } else {
+               JOptionPane.showMessageDialog(null, "Cellphone number incorrectly formatted or does not contain the international code.");
+           }
+        
+    }//GEN-LAST:event_jTextField2ActionPerformed
 
     /**
      * @param args the command line arguments

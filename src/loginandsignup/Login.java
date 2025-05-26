@@ -6,7 +6,40 @@ import javax.swing.JOptionPane;
 
 public class Login extends javax.swing.JFrame {
 
-   
+    private String storedUsername;
+    private String storedPassword;
+    private String firstName;
+    private String lastName;
+
+    // Constructor
+    public Login(String username, String password, String firstName, String lastName) {
+        this.storedUsername = username;
+        this.storedPassword = password;
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
+    public boolean checkUserName(String username) {
+       return username.matches("^(?=.{1,5}$)(?=.*_).*$");
+
+    }
+
+    public boolean checkPasswordComplexity(String password) {
+        return password.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$");
+    }
+
+    public boolean loginUser(String inputUsername, String inputPassword) {
+        return storedUsername.equals(inputUsername) && storedPassword.equals(inputPassword);
+    }
+
+    public String returnLoginStatus(String inputUsername, String inputPassword) {
+        if (loginUser(inputUsername, inputPassword)) {
+            return "Welcome " + firstName + ", " + lastName + " it is great to see you again.";
+        } else {
+            return "Username or password incorrect, please try again.";
+        }
+    }
+
     public Login() {
         initComponents();
     }
@@ -208,40 +241,59 @@ public class Login extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-     
-        JOptionPane.showMessageDialog(null, "Button clicked!");
-        Welcome welcomeForm = new Welcome(); // create instance of Welcome form
-        welcomeForm.setVisible(true);        // show the Welcome form
-        this.dispose(); 
+                                             
+        String usernameText = username.getText();
+        String passwordText = password.getText();
+
+        String usernamePattern = "^(?=.*_).{1,5}$";
+        String passwordPattern = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$";
+
+        if (!usernameText.matches(usernamePattern)) {
+            JOptionPane.showMessageDialog(null, "Username is not correctly formatted, please ensure that your username contains an underscore and is no more than five characters in length.");
+            return;
+        }
+
+        if (!passwordText.matches(passwordPattern)) {
+            JOptionPane.showMessageDialog(null, "Password is not correctly formatted! Must be at least 8 characters long and include uppercase, lowercase, a number, and a special character.");
+            return;
+        }
+
+        JOptionPane.showMessageDialog(null, "Login successful!");
+
+        this.dispose(); // Close the login window
+        // Open QuickChat window
+        QuickChat quickChatWindow = new QuickChat(); 
+        quickChatWindow.setVisible(true);
+        
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void usernameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_usernameActionPerformed
-        
-        String input = username.getText();
+        String usernameText = username.getText(); // Get text from the actual JTextField
 
-        if (input.contains("_") && input.length() == 5) {
-            JOptionPane.showMessageDialog(this, "Username successfully captured");
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                "Username is not correctly formatted. Please ensure your username contains an underscore and is no more than 5 characters long");
-        }
+       // Use the same regular expression pattern as in SignUp
+       String usernamePattern = "^(?=.*_).{1,5}$";
+
+
+       if (usernameText.matches(usernamePattern)) {
+           JOptionPane.showMessageDialog(null, "Username format is valid.");
+       } else {
+           JOptionPane.showMessageDialog(null, "Invalid username format. Please ensure your username contains an underscore and is at least five characters long.");
+       }
+
     }//GEN-LAST:event_usernameActionPerformed
 
     private void passwordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_passwordActionPerformed
-        
-       String input = password.getText();
-        validatePassword(input);
-        
-       //Regex: 1+ capital, 1+ digit, 1+ special character, min 8 total
-       String pattern = "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+=<<>?{}\\[\\]~]).{8,}$";
+       String passwordText = password.getText(); // Get text from password field
+    
+        // Strong password pattern: At least 8 characters, includes a number, uppercase letter, lowercase letter, and a special character
+        String passwordPattern = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$";
 
-        if (password.matches(pattern)) {
-            JOptionPane.showMessageDialog(this, "Password successfully captured.");
+        if (passwordText.matches(passwordPattern)) {
+            JOptionPane.showMessageDialog(null, "Password format is valid.");
         } else {
-            JOptionPane.showMessageDialog(this, 
-                "Password is not correctly formatted; please ensure that the password contains at least eight characters, a capital letter, a number, and a special character.");
+            JOptionPane.showMessageDialog(null, "Invalid password format! Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character.");
         }
-        
+ 
     }//GEN-LAST:event_passwordActionPerformed
 
     /**
