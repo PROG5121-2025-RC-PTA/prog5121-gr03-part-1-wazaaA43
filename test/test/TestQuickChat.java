@@ -23,7 +23,7 @@ public class TestQuickChat {
     
      private QuickChat chat;
 
-     String message = "Hello, this is a test message with [ID: 123456]"; // Example message
+    String message = "Hello, this is a test message with [ID: 123456]"; // Example message
     String messageID = chat.extractIDFromMessage(message);
     String expectedHash = chat.generateMessageHash(messageID, message);
 
