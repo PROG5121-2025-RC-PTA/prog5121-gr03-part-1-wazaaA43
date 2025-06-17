@@ -17,7 +17,7 @@ import java.util.List;
 import loginandsignup.Message;
 import java.util.UUID;
 
-
+import loginandsignup.MessageManager;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -39,13 +39,23 @@ public class QuickChat extends javax.swing.JFrame {
     String formatted = senderName + ": " + message + " (" + timeStamp + ") [ID: " + messageID + "]";
     private JTextField searchTextField;
     private JTextField deleteTextField;
+    private MessageManager messageManager = new MessageManager();
+
 
     public QuickChat() {
         initComponents(); 
+        if (MessageManager.storedMessages.isEmpty()) {
+            MessageManager.preloadTestMessages();
+            refreshMessagesArea();
+        }
+
         this.message = inputField.getText().trim(); 
         askUsername(); // Ask for name
         welcomeUser(); // Ask for message limit
    
+        messageManager.loadMessages();
+        displayMessages();
+        
         searchMessage = new javax.swing.JButton();
         deleteMessage = new javax.swing.JButton();
 
@@ -75,6 +85,14 @@ public class QuickChat extends javax.swing.JFrame {
         });
     }
 
+    private void displayMessages() {
+        messageArea.setText("");
+        for (String msg : messageManager.getAllMessages()) {
+            messageArea.append(msg + "\n");
+        }
+    }
+
+    
     private void askUsername() {
         String input = JOptionPane.showInputDialog(this, "Enter your name:");
         if (input != null && !input.trim().isEmpty()) {
@@ -106,12 +124,16 @@ public class QuickChat extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         messageArea = new javax.swing.JTextArea();
+        longestMessageButton = new javax.swing.JButton();
+        searchByID = new javax.swing.JButton();
+        showTotalMessages = new javax.swing.JButton();
         inputField = new javax.swing.JTextField();
         sendButton = new javax.swing.JButton();
         viewRecents = new javax.swing.JButton();
         exitChat = new javax.swing.JButton();
         searchMessage = new javax.swing.JButton();
         deleteMessage = new javax.swing.JButton();
+        searchIDField = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -129,27 +151,64 @@ public class QuickChat extends javax.swing.JFrame {
         messageArea.setRows(5);
         jScrollPane1.setViewportView(messageArea);
 
+        longestMessageButton.setText("Show longest message");
+        longestMessageButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                longestMessageButtonActionPerformed(evt);
+            }
+        });
+
+        searchByID.setText("Search by ID");
+        searchByID.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchByIDActionPerformed(evt);
+            }
+        });
+
+        showTotalMessages.setText("Show total messages sent");
+        showTotalMessages.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showTotalMessagesActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel1)
-                .addGap(275, 275, 275))
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(141, 141, 141)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 550, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(129, Short.MAX_VALUE))
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(154, 154, 154)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 550, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(longestMessageButton)
+                            .addComponent(searchByID)
+                            .addComponent(showTotalMessages)))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(297, 297, 297)
+                        .addComponent(jLabel1)))
+                .addContainerGap(15, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(8, Short.MAX_VALUE))
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(12, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(showTotalMessages)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(longestMessageButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(searchByID)
+                        .addGap(63, 63, 63))))
         );
 
         inputField.addActionListener(new java.awt.event.ActionListener() {
@@ -199,12 +258,14 @@ public class QuickChat extends javax.swing.JFrame {
             }
         });
 
+        searchIDField.setText("searchIDField: ");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap(23, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(16, 16, 16))
             .addGroup(jPanel2Layout.createSequentialGroup()
@@ -213,14 +274,17 @@ public class QuickChat extends javax.swing.JFrame {
                     .addComponent(searchMessage)
                     .addComponent(deleteMessage))
                 .addGap(46, 46, 46)
-                .addComponent(inputField, javax.swing.GroupLayout.PREFERRED_SIZE, 435, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(inputField, javax.swing.GroupLayout.PREFERRED_SIZE, 435, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(sendButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(viewRecents))
-                    .addComponent(exitChat))
+                        .addGap(6, 6, 6)
+                        .addComponent(searchIDField, javax.swing.GroupLayout.PREFERRED_SIZE, 418, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(18, 18, 18)
+                .addComponent(sendButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(viewRecents)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(exitChat)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -230,16 +294,24 @@ public class QuickChat extends javax.swing.JFrame {
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(inputField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(searchMessage))
-                    .addComponent(sendButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(viewRecents, javax.swing.GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(deleteMessage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(exitChat, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(22, 22, 22))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(sendButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(viewRecents, javax.swing.GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
+                                .addComponent(exitChat, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(deleteMessage)
+                        .addGap(22, 22, 22))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(searchMessage)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(inputField, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(1, 1, 1)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(searchIDField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -275,9 +347,19 @@ public class QuickChat extends javax.swing.JFrame {
         return UUID.randomUUID().toString().replaceAll("[^0-9]", "").substring(0, 10);
     }
     
-    private boolean isValidPhoneNumber(String phoneNumber) {
-        return phoneNumber.matches("\\+\\d{1,3}\\d{7,10}"); // Example: +27XXXXXXXXX
+   public boolean isValidPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || !phoneNumber.matches("\\+27\\d{9}")) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Invalid phone number format. Must include country code.",
+                "Invalid Number",
+                JOptionPane.ERROR_MESSAGE
+            );
+            return false;
+        }
+        return true;
     }
+
     
     private void processUserChoice(int userChoice) {
         if (userChoice == 1) { // Send Message
@@ -291,7 +373,7 @@ public class QuickChat extends javax.swing.JFrame {
 
     
     private void sendButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendButtonActionPerformed
-      if (!isLoggedIn) {
+     if (!isLoggedIn) {
             JOptionPane.showMessageDialog(this, "Please login to send messages.");
             return;
         }
@@ -301,16 +383,31 @@ public class QuickChat extends javax.swing.JFrame {
             return;
         }
 
-        recipientPhoneNumber = JOptionPane.showInputDialog(this, "Enter recipient's phone number:");
+        // Ask user for phone number
+        recipientPhoneNumber = JOptionPane.showInputDialog(
+            this, "Enter recipient's SA phone number (9 digits only, e.g. 761234567):"
+
+        );
+
+        if (recipientPhoneNumber == null || recipientPhoneNumber.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Phone number input cancelled or empty.");
+            return;
+        }
+
+        recipientPhoneNumber = "+27" + recipientPhoneNumber.trim();
+
         if (!isValidPhoneNumber(recipientPhoneNumber)) {
-            JOptionPane.showMessageDialog(this, "Invalid phone number format. Must include country code.");
+            JOptionPane.showMessageDialog(this, "Invalid South African phone number. Must be 9 digits after +27.");
             return;
         }
 
         String message = inputField.getText().trim();
         if (message.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Message cannot be empty.");
+            messageManager.addDisregardedMessage(message);
             return;
+        } else {
+            messageManager.addSentMessage(formatted); // formatted includes recipient and time
         }
 
         if (message.length() > 50) {
@@ -318,60 +415,72 @@ public class QuickChat extends javax.swing.JFrame {
             return;
         }
 
-        if (messagesSent == messageLimit) {
-        JOptionPane.showMessageDialog(this, "You have sent all " + messageLimit + " messages.");
-        }
-        
-        
-       // Generate a UNIQUE message ID before formatting the message
+        // Generate a unique message ID
         String messageID;
+        int attempts = 0;
         do {
             messageID = generateMessageID();
+            attempts++;
+            if (attempts > 5) {
+                JOptionPane.showMessageDialog(this, "Error: Unable to generate unique message ID.");
+                return;
+            }
         } while (!isUniqueMessageID(messageID));
 
+        // Format message string for storage
+        String timeStamp = java.time.LocalTime.now().withNano(0).toString();
+        String formatted = senderName + " → " + recipientPhoneNumber + ": " + message + " (" + timeStamp + ") [ID: " + messageID + "]";
+
+        // Present message options to the user
         int choice = JOptionPane.showOptionDialog(
             this, "Choose an option:", "Message Options",
             JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
             null, new String[]{"Send", "Discard", "Store"}, "Send"
         );
 
-        int attempts = 0;
-        do {
-            messageID = generateMessageID();
-            attempts++;
-            if (attempts > 5) { // Prevent infinite loops
-                JOptionPane.showMessageDialog(this, "Error: Unable to generate unique message ID.");
-                return;
-            }
-        } while (!isUniqueMessageID(messageID));
-
-        if (choice == JOptionPane.CANCEL_OPTION) {
-            storeMessage(formatted);
-            JOptionPane.showMessageDialog(this, "Message saved for later.");
-            return;
-        } else if (choice == JOptionPane.NO_OPTION) {
+        if (choice == JOptionPane.NO_OPTION) {
+            messageManager.addDisregardedMessage(message);
             JOptionPane.showMessageDialog(this, "Message discarded.");
+            return;
+        } else if (choice == JOptionPane.CANCEL_OPTION) {
+            messageManager.addMessage(formatted); // Stored for later
+            JOptionPane.showMessageDialog(this, "Message saved for later.");
             return;
         }
 
-        // Create and send the message ONLY when the user chooses "Send Message"
+        // Create and send the message
         Message msg = new Message(messageID, recipientPhoneNumber, message);
-        msg.sendMessage(messageID, recipientPhoneNumber, message);
-        System.out.println("Total Messages Sent: " + Message.getTotalMessagesSent());
+        // Add message ID and hash to their arrays
+        messageManager.messageIDs.add(messageID);
 
-        String timeStamp = LocalTime.now().withNano(0).toString(); 
-        String formatted = senderName + " → " + recipientPhoneNumber + ": " + message + " (" + timeStamp + ") [ID: " + messageID + "]";
-        
+        String messageHash = msg.getMessageHash(); // already created
+        messageManager.messageHashes.add(messageHash);
+
+        msg.sendMessage();
+
         messageArea.append(formatted + "\n");
-        storedMessages.add(formatted);
-        storeMessage(formatted);
+        messageManager.addMessage(formatted);
         inputField.setText("");
         messagesSent++;
+
+        //Refresh the messages area to reflect the newly added message
+        refreshMessagesArea();
+        
+        String summary = String.format(
+            "Message Sent Successfully!\n\n" +
+            "Message ID: %s\n" +
+            "Message Hash: %s\n" +
+            "Recipient: %s\n" +
+            "Message: %s\n" +
+            "Total Messages Sent: %d",
+            messageID, messageHash, recipientPhoneNumber, message, Message.getTotalMessagesSent()
+        );
+
+        JOptionPane.showMessageDialog(this, summary, "Message Info", JOptionPane.INFORMATION_MESSAGE);
+
         if (messagesSent == messageLimit) {
             JOptionPane.showMessageDialog(this, "You have sent all " + messageLimit + " messages.");
         }
-
-    
     }//GEN-LAST:event_sendButtonActionPerformed
 
     
@@ -404,12 +513,14 @@ public class QuickChat extends javax.swing.JFrame {
         String messageHash = generateMessageHash(messageID, message);
         String formatted = senderName + " → " + recipientPhoneNumber + ": " + message + " (" + timeStamp + ") [ID: " + messageID + "] [Hash: " + messageHash + "]";
 
-        JOptionPane.showMessageDialog(null, "Message Sent:\n" +
+       JOptionPane.showMessageDialog(null, "Message Sent:\n" +
+        "Sender: " + senderName + "\n" +
+        "Recipient: " + recipientPhoneNumber + "\n" +
         "Message ID: " + messageID + "\n" +
         "Message Hash: " + messageHash + "\n" +
-        "Recipient: " + recipientPhoneNumber + "\n" +
         "Message: " + message, 
         "Message Sent", JOptionPane.INFORMATION_MESSAGE);
+
 
         storedMessages.add(formatted); // Store the message only if sending is successful
         storeMessage(formatted);
@@ -417,7 +528,9 @@ public class QuickChat extends javax.swing.JFrame {
  
     private void viewRecentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewRecentsActionPerformed
        javax.swing.JOptionPane.showMessageDialog(this, "Coming Soon.");
-
+       
+       MessageManager.loadMessages();
+       refreshMessagesArea(); //update UI
     }//GEN-LAST:event_viewRecentsActionPerformed
 
     private void exitChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitChatActionPerformed
@@ -443,6 +556,14 @@ public class QuickChat extends javax.swing.JFrame {
         if (!found) {
             JOptionPane.showMessageDialog(this, "Message not found.");
         }
+        
+        String keyword = searchTextField.getText().trim();
+        List<String> results = messageManager.searchMessages(keyword);
+        messageArea.setText("Search Results:\n");
+        for (String msg : results) {
+            messageArea.append(msg + "\n");
+        }
+        
     }//GEN-LAST:event_searchMessageActionPerformed
 
     private void deleteMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteMessageActionPerformed
@@ -455,7 +576,63 @@ public class QuickChat extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Message not found.");
         }
 
+        String idToDelete = deleteTextField.getText().trim();
+        boolean success = messageManager.deleteMessageById(idToDelete);
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Message deleted.");
+            refreshMessagesArea(); //update message list
+        } else {
+            JOptionPane.showMessageDialog(this, "Message with ID not found.");
+        }
+        displayMessages();
+
     }//GEN-LAST:event_deleteMessageActionPerformed
+
+    private void longestMessageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_longestMessageButtonActionPerformed
+       String longest = messageManager.getLongestMessage();
+
+        if (longest != null && !longest.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Longest Message:\n" + longest,
+                    "Longest Message", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(null, "No messages have been sent yet.",
+                    "Longest Message", JOptionPane.WARNING_MESSAGE);
+        }
+        
+    }//GEN-LAST:event_longestMessageButtonActionPerformed
+
+    private void searchByIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchByIDActionPerformed
+        String rawInput = searchIDField.getText().trim();
+
+        if (rawInput.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Please enter a Message ID to search.",
+                    "Input Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Extract just the ID if user entered something like "[ID: 0703145798]"
+        String id = rawInput.replace("[ID: ", "").replace("]", "").trim();
+
+        String foundMessage = messageManager.searchMessageByID(id);
+
+        if (foundMessage != null) {
+            JOptionPane.showMessageDialog(null, "Message found:\n" + foundMessage,
+                    "Search Result", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(null, "No message found with ID: " + id,
+                    "Search Result", JOptionPane.ERROR_MESSAGE);
+            refreshMessagesArea(); // reset full list after failed search
+        }
+    }//GEN-LAST:event_searchByIDActionPerformed
+
+    private void showTotalMessagesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showTotalMessagesActionPerformed
+        int total = messageManager.getTotalMessagesSent();
+
+        JOptionPane.showMessageDialog(null,
+            "Total Messages Sent: " + total,
+            "Message Count",
+            JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_showTotalMessagesActionPerformed
 
        
     private String findMessageByID(String id) {
@@ -492,18 +669,40 @@ public class QuickChat extends javax.swing.JFrame {
     
     private void deleteMessageByIDActionPerformed(java.awt.event.ActionEvent evt) { 
                                             
-        String deleteID = JOptionPane.showInputDialog(this, "Enter message ID to delete:");
-        if (deleteID != null && !deleteID.trim().isEmpty()) {
-            boolean deleted = deleteMessageByID(deleteID);
-            if (deleted) {
-                JOptionPane.showMessageDialog(this, "Message deleted successfully.");
-            } else {
-                JOptionPane.showMessageDialog(this, "Message ID not found.");
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, "Invalid ID entered.");
+        String rawInput = searchIDField.getText().trim();
+
+        if (rawInput.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Please enter a Message ID to delete.",
+                    "Input Error", JOptionPane.WARNING_MESSAGE);
+            return;
         }
+
+        // Extract the raw ID from formats like "[ID: 0703145798]" or just "0703145798"
+        String id = rawInput.replace("[ID: ", "").replace("]", "").trim();
+
+        boolean deleted = messageManager.deleteMessageById(id);
+
+        if (deleted) {
+            JOptionPane.showMessageDialog(null, "Message with ID: " + id + " has been deleted.",
+                    "Delete Successful", JOptionPane.INFORMATION_MESSAGE);
+            refreshMessagesArea();  // <- Optional, if you have this method to reload the text area
+        } else {
+            JOptionPane.showMessageDialog(null, "No message found with ID: " + id,
+                    "Delete Failed", JOptionPane.ERROR_MESSAGE);
+        }
+
     }
+    
+    private void refreshMessagesArea() {
+        StringBuilder builder = new StringBuilder();
+
+        for (String msg : messageManager.storedMessages) {
+            builder.append(msg).append("\n\n");
+        }
+
+        messageArea.setText(builder.toString().trim());
+    }
+
     
     public String printMessages() {
     return storedMessages.toString();
@@ -594,9 +793,13 @@ public class QuickChat extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JButton longestMessageButton;
     private javax.swing.JTextArea messageArea;
+    private javax.swing.JButton searchByID;
+    private javax.swing.JTextField searchIDField;
     private javax.swing.JButton searchMessage;
     private javax.swing.JButton sendButton;
+    private javax.swing.JButton showTotalMessages;
     private javax.swing.JButton viewRecents;
     // End of variables declaration//GEN-END:variables
 }
